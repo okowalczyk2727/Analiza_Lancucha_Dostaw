@@ -1,0 +1,10 @@
+# Source data downloaded from Mendeley
+data/raw/*.csv
+!data/raw/README.md
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
