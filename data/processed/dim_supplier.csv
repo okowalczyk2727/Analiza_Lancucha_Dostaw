@@ -1,0 +1,25 @@
+supplier_id,supplier_name,supplier_region,performance_tier,planned_lead_time_days,on_time_probability,target_fill_rate
+SUP001,Atlas Industries,Europe,A,10,0.971,0.9907
+SUP002,Baltic Manufacturing,Americas,A,13,0.9679,0.9862
+SUP003,Cobalt Trading,Pacific Asia,A,12,0.979,0.9949
+SUP004,Delta Supply,Europe,A,13,0.9451,0.9909
+SUP005,Evergreen Partners,Americas,A,13,0.9548,0.997
+SUP006,Frontier Goods,Pacific Asia,A,12,0.9729,0.9908
+SUP007,Global Industries,Europe,A,14,0.9491,0.9922
+SUP008,Harbor Manufacturing,Americas,A,7,0.9731,0.9932
+SUP009,Ion Trading,Pacific Asia,B,12,0.9006,0.9624
+SUP010,Jade Supply,Europe,B,22,0.9114,0.9772
+SUP011,Keystone Partners,Americas,B,17,0.8556,0.9663
+SUP012,Lighthouse Goods,Pacific Asia,B,12,0.8523,0.9739
+SUP013,Meridian Industries,Europe,B,16,0.8996,0.9839
+SUP014,Nova Manufacturing,Americas,B,15,0.8696,0.9664
+SUP015,Orion Trading,Pacific Asia,B,19,0.8552,0.9545
+SUP016,Pioneer Supply,Europe,B,17,0.8582,0.9734
+SUP017,Quantum Partners,Americas,B,18,0.875,0.9791
+SUP018,River Goods,Pacific Asia,B,19,0.865,0.9791
+SUP019,Summit Industries,Europe,C,29,0.7966,0.9071
+SUP020,Terra Manufacturing,Americas,C,23,0.7819,0.8898
+SUP021,Union Trading,Pacific Asia,C,28,0.724,0.8805
+SUP022,Vertex Supply,Europe,C,28,0.7798,0.9294
+SUP023,Westbridge Partners,Americas,C,25,0.7937,0.9121
+SUP024,Zenith Goods,Pacific Asia,C,26,0.7168,0.888
