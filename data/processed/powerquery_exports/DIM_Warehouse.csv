@@ -1,0 +1,4 @@
+warehouse_ID,warehouse_name,region_group,city,country
+"WH_AM","Americas Distribution Centre","Americas","Houston","United States"
+"WH_EU","Europe Distribution Centre","Europe and Africa","Rotterdam","Netherlands"
+"WH_APAC","Asia Pacific Distribution Centre","Pacific Asia","Singapore","Singapore"
