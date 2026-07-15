@@ -1,0 +1,14 @@
+USE SupplyChainAnalytics;
+GO
+
+IF SCHEMA_ID(N'dw') IS NULL
+    EXEC(N'CREATE SCHEMA dw');
+GO
+
+IF SCHEMA_ID(N'mart') IS NULL
+    EXEC(N'CREATE SCHEMA mart');
+GO
+
+IF SCHEMA_ID(N'qa') IS NULL
+    EXEC(N'CREATE SCHEMA qa');
+GO
