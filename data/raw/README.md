@@ -26,6 +26,5 @@ Licencja danych wskazana w projekcie: CC BY 4.0.
 - W raporcie nie są wykorzystywane imiona, nazwiska, adresy e-mail, hasła ani dokładne adresy klientów.
 - Przed końcową publikacją repozytorium należy rozważyć usunięcie surowego pliku z GitHub i pozostawienie instrukcji pobrania danych ze źródła.
 
-Surowy plik zawiera pola przypominające dane osobowe i dane dostępowe. Nawet jeżeli pochodzą z publicznego zbioru, nie są potrzebne do pokazania umiejętności analitycznych.
 
 Powrót do [opisu danych](../README.md).
