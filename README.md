@@ -1,131 +1,115 @@
 # Analiza łańcucha dostaw i zapasów
 
-Projekt przedstawia pełny przepływ danych od pliku źródłowego przez Power Query i SQL Server do modelu analitycznego oraz raportu Power BI. Celem jest analiza sprzedaży, terminowości dostaw, dostępności zapasów, pracy dostawców i klasyfikacji produktów.
+Projekt pokazuje pełny proces analityczny: od przygotowania danych w Power Query, przez relacyjny model w SQL Server, aż po zestaw miar DAX i sześciostronicowy raport Power BI. Analiza łączy sprzedaż, dostawy, zapasy, zakupy oraz klasyfikację produktów ABC/XYZ.
 
-## Status projektu
+Głównym celem było zbudowanie rozwiązania, które nie kończy się na samym dashboardzie. Dane mają określoną ziarnistość, model korzysta ze współdzielonych wymiarów, a wyniki raportu można uzgodnić z warstwą SQL i stroną kontrolną w Power BI.
 
-Stan na 16.07.2026: projekt jest w trakcie realizacji.
+## Co można sprawdzić w raporcie
 
-| Obszar | Status | Obecny zakres |
-| --- | --- | --- |
-| Dane źródłowe | Gotowe | Plik DataCo i opis 53 pól |
-| Power Query | Gotowe dla obecnego zakresu | Wymiary, fakty sprzedaży i wysyłek, flagi jakościowe oraz eksporty CSV |
-| Dane pomocnicze | Gotowe jako pliki CSV | Kalendarz, dostawcy, dzienne stany zapasów, zamówienia zakupu i klasyfikacja ABC/XYZ |
-| SQL Server | Częściowo gotowe | Baza `SupplyChainAnalytics`, schematy `dw`, `mart`, `qa`, tabele, klucze i 5 widoków raportowych |
-| Power BI | W trakcie | Model danych, strona kontroli `00_QA` i strona `Executive Overview` |
-| Dokumentacja | W trakcie | Uzupełnione README, brakuje zrzutów, słownika danych, eksportu miar DAX i końcowych wniosków |
+- wartość sprzedaży, zysk, marżę i strukturę kategorii,
+- terminowość dostaw oraz różnice między sposobami wysyłki,
+- dostępność zapasu, ryzyko braku towaru i wartość zapasu końcowego,
+- terminowość, kompletność i OTIF dostawców,
+- koncentrację sprzedaży oraz stabilność popytu według klas ABC/XYZ.
 
-Projekt nie jest jeszcze wersją końcową. Aktualny raport Power BI zawiera 2 strony, z czego jedna służy do kontroli modelu.
+## Najważniejsze wyniki
 
-## Architektura rozwiązania
+W całym dostępnym okresie, po wykluczeniu zamówień anulowanych i oznaczonych jako podejrzane:
+
+- sprzedaż netto wyniosła **31,64 mln USD**, a zysk **3,81 mln USD**, co odpowiada marży **12,03%**;
+- terminowo zrealizowano **42,69%** ważnych wysyłek, a 36 048 z 62 897 wysyłek było opóźnionych;
+- w modelu zapasów fill rate wyniósł **92,01%**, ekspozycja na brak zapasu **0,51%**, a końcowa wartość zapasu **2,64 mln USD**;
+- w modelu zakupowym OTIF dostawców wyniósł **71,85%**, przy fill rate na poziomie **97,97%**;
+- siedem produktów klasy A odpowiadało za około **76,9%** sprzedaży ujętej w klasyfikacji.
+
+Wyniki sprzedaży i wysyłek pochodzą z publicznego zbioru DataCo. Dane o stanach magazynowych, zamówieniach zakupu i dostawcach zostały przygotowane jako spójny scenariusz analityczny. Nie należy interpretować ich jako rzeczywistych wyników konkretnej firmy.
+
+## Przepływ danych
 
 ```mermaid
 flowchart TD
-    A[DataCo CSV] --> B[Power Query]
+    A[Publiczne dane DataCo] --> B[Power Query]
     B --> C[Eksporty CSV]
-    D[Dane modelowane w Pythonie] --> C
-    C --> E[SQL Server: dw]
-    E --> F[Widoki: mart]
-    F --> G[Power BI]
+    D[Modelowane dane zapasów i zakupów] --> C
+    C --> E[SQL Server: dw, mart, qa]
+    E --> F[Power BI i DAX]
 ```
 
-Warstwa danych składa się z dwóch części:
-
-1. Dane źródłowe DataCo dotyczą zamówień, klientów, produktów, sprzedaży i wysyłek.
-2. Dane dostawców, zakupów i dziennych stanów magazynowych są danymi modelowanymi. Nie są to rzeczywiste dane operacyjne DataCo.
+Power Query odpowiada za oczyszczenie danych źródłowych, rozdzielenie faktów i wymiarów oraz przygotowanie flag jakościowych. SQL Server przechowuje model, wystawia widoki raportowe i zapewnia warstwę kontroli. Power BI korzysta z modelu wielofaktowego oraz jednej tabeli miar.
 
 ## Zakres danych
 
-| Grupa | Najważniejsze pliki | Liczba rekordów |
+| Obszar | Ziarnistość | Liczba rekordów |
 | --- | --- | ---: |
-| Dane źródłowe | `DataCoSupplyChainDataset.csv` | 180 519 |
-| Wiersze zamówień | `FAKT_OrderLines.csv` | 180 519 |
-| Wysyłki | `FAKT_Shipments.csv` | 65 752 |
-| Dzienne stany zapasów | `fact_inventory_daily.csv` | 311 416 |
-| Zamówienia zakupu | `fact_purchase_orders.csv` | 2 199 |
-| Produkty | `DIM_Product.csv` | 118 |
-| Dostawcy | `dim_supplier.csv` | 24 |
+| Dane źródłowe DataCo | Wiersz zamówienia | 180 519 |
+| Sprzedaż | Wiersz zamówienia | 180 519 |
+| Wysyłki | Jedno zamówienie i jego wysyłka | 65 752 |
+| Dzienne stany zapasów | Dzień, produkt i magazyn | 311 416 |
+| Zamówienia zakupu | Jedno zamówienie zakupu | 2 199 |
+| Produkty | Jeden produkt | 118 |
+| Dostawcy | Jeden dostawca | 24 |
 
-Dane sprzedażowe obejmują okres od 01.01.2015 do 31.01.2018. Kalendarz i symulacja zapasów obejmują okres od 01.01.2015 do 07.03.2018.
+Dane sprzedażowe obejmują okres od 1 stycznia 2015 r. do 31 stycznia 2018 r. Kalendarz i model zapasów sięgają do 7 marca 2018 r. Dokładny opis plików i ich pochodzenia znajduje się w [data/README.md](data/README.md).
 
-Szczegółowy opis plików znajduje się w [data/README.md](data/README.md).
+## Model analityczny
 
-## Model danych
+W Power BI znajdują się cztery tabele faktów:
 
-Model Power BI jest modelem wielofaktowym opartym na współdzielonych wymiarach.
+- `FAKT_Sales`,
+- `FAKT_Shipments`,
+- `FAKT_Inventory`,
+- `FAKT_Purchase_orders`.
 
-Tabele faktów:
+Współdzielone wymiary opisują datę, produkt, klienta, geografię, sposób wysyłki, magazyn i dostawcę. Model zawiera 23 relacje. Relacje prowadzą od wymiarów do faktów i filtrują dane w jednym kierunku.
 
-- `FAKT_Sales`
-- `FAKT_Shipments`
-- `FAKT_Inventory`
-- `FAKT_Purchase_orders`
+Dla sprzedaży i wysyłek aktywną datą jest data zamówienia. Daty wysyłki i planowanej wysyłki pozostają relacjami nieaktywnymi. W zapasach aktywna jest data migawki, a w zakupach data złożenia zamówienia. Dzięki temu jeden kalendarz może obsługiwać wszystkie obszary bez niejednoznacznych ścieżek filtrowania.
 
-Wymiary:
+Model zawiera 66 miar DAX zapisanych w tabeli `KPI_Measures`. Kolumny techniczne i klucze są ukryte przed użytkownikiem raportu.
 
-- `DIM_Date`
-- `DIM_Product`
-- `DIM_Customer`
-- `DIM_Geography`
-- `DIM_Shipping_mode`
-- `DIM_Warehouse`
-- `DIM_Supplier`
+## Raport Power BI
 
-Miary są przechowywane w osobnej tabeli `KPI_Measures`.
+Głównym plikiem jest [powerBI/ChainSupplyAnalysis.pbix](powerBI/ChainSupplyAnalysis.pbix). Raport zawiera pięć stron biznesowych oraz stronę techniczną.
+
+| Strona | Zastosowanie |
+| --- | --- |
+| `00_QA` | Kontrola liczby rekordów, zakresu dat i głównych agregacji |
+| `Executive Overview` | Najważniejsze KPI oraz trend sprzedaży i zysku |
+| `Delivery Performance` | Terminowość, opóźnienia i porównanie sposobów wysyłki |
+| `Inventory Health` | Dostępność, ryzyko braku towaru i pozycja zapasowa magazynów |
+| `Supplier Performance` | OTIF, fill rate, terminowość, kompletność i lead time |
+| `Product Classification` | Sprzedaż, zysk i utracona sprzedaż według klas ABC/XYZ |
+
+Strony biznesowe korzystają ze wspólnego układu: tytuł i filtr u góry, sześć kart KPI oraz dwa wykresy analityczne. Szczegóły raportu i sposób odświeżenia opisano w [powerBI/README.md](powerBI/README.md).
 
 ## Warstwa SQL
 
-Baza danych nosi nazwę `SupplyChainAnalytics` i wykorzystuje trzy schematy:
+Baza `SupplyChainAnalytics` wykorzystuje trzy schematy:
 
-- `dw` przechowuje tabele wymiarów i faktów,
-- `mart` przechowuje klasyfikację produktów i widoki pod Power BI,
-- `qa` jest przygotowany pod kontrole jakości.
+- `dw` dla wymiarów i faktów,
+- `mart` dla klasyfikacji produktów i widoków używanych przez Power BI,
+- `qa` dla uzgodnień liczby rekordów, kluczy osieroconych i KPI.
 
-Obecne widoki raportowe:
+Skrypty należy uruchamiać w kolejności od `00_create_database.sql` do `04_qa_checks.sql`. Szczegółowa kolejność ładowania danych i ważne informacje o kluczach dat znajdują się w [sql/README.md](sql/README.md).
 
-- `mart.vw_dim_product`
-- `mart.vw_fact_sales`
-- `mart.vw_fact_shipments`
-- `mart.vw_fact_inventory`
-- `mart.vw_fact_purchase_orders`
+## Jak uruchomić projekt
 
-Dokładny opis skryptów i obecnych ograniczeń znajduje się w [sql/README.md](sql/README.md).
+### Sam raport
 
-## KPI w Power BI
+1. Otwórz `powerBI/ChainSupplyAnalysis.pbix` w Power BI Desktop.
+2. Zapisany model zawiera dane, więc raport można przejrzeć bez natychmiastowego odświeżania.
+3. Przed prezentacją sprawdź stronę `00_QA`.
 
-Obecny model obejmuje miary z pięciu obszarów:
+### Odtworzenie całego przepływu
 
-- sprzedaż: `Net Sales`, `Profit`, `Profit Margin %`, `Units Sold`,
-- dostawy: `On-Time Delivery %`, `Late Shipments`, `Average Shipping Days`,
-- zapasy: `Inventory Value EOP`, `Inventory Fill Rate %`, `Stockout Exposure %`, `Median Days of Supply EOP`,
-- zakupy i dostawcy: `Supplier OTIF %`, `Supplier Fill Rate %`, `PO On-Time %`, `PO In-Full %`,
-- kontrola modelu: liczba rekordów, pierwsza i ostatnia data oraz zgodność agregacji.
+1. Utwórz bazę i schematy za pomocą skryptów `00` i `01`.
+2. Na pustej bazie uruchom `02_create_tables.sql`.
+3. Załaduj wymiary, a następnie fakty z katalogu `data/processed`.
+4. Utwórz widoki raportowe za pomocą `03_create_views.sql`.
+5. Uruchom `04_qa_checks.sql` i sprawdź, czy liczby rekordów oraz KPI są zgodne.
+6. W ustawieniach źródeł danych Power BI wskaż własną instancję SQL Server i bazę `SupplyChainAnalytics`.
+7. Odśwież model i ponownie sprawdź `00_QA`.
 
-## Strony raportu Power BI
-
-### Gotowe
-
-1. `00_QA`
-   - kontrola liczby rekordów,
-   - kontrola zakresu dat,
-   - kontrola miar sprzedaży, dostaw, zapasów, zakupów i klasyfikacji.
-
-2. `Executive Overview`
-   - filtr zakresu dat,
-   - karty głównych KPI,
-   - sprzedaż netto i zysk w czasie,
-   - 10 kategorii z najwyższą sprzedażą netto.
-
-### Do wykonania
-
-3. `Delivery Performance`
-4. `Inventory Health`
-5. `Supplier Performance`
-6. `Product Classification`
-
-Pozycje od 2 do 6 tworzą docelowe 5 stron biznesowych. Strona `00_QA` jest stroną techniczną i nie wchodzi do tej liczby.
-
-Więcej informacji znajduje się w [powerBI/README.md](powerBI/README.md).
+Import CSV nie jest zautomatyzowany. Pliki sprzedaży i wysyłek zawierają daty operacyjne, natomiast model SQL przechowuje dodatkowo klucze dat. Podczas ładowania należy wyprowadzić je przez konwersję odpowiednich znaczników czasu do typu `date`. Dokładne mapowanie znajduje się w dokumentacji SQL.
 
 ## Struktura repozytorium
 
@@ -136,44 +120,33 @@ Analiza_Lancucha_Dostaw/
 |   `-- processed/
 |       |-- generated_data/
 |       `-- powerquery_exports/
-|-- documentation/
 |-- powerBI/
 |-- sql/
-|-- .gitattributes
-|-- .gitignore
+|-- CHANGELOG.md
 `-- README.md
 ```
 
-## Uruchomienie na obecnym etapie
-
-1. Otwórz repozytorium lokalnie.
-2. Sprawdź opis i kolejność danych w [data/README.md](data/README.md).
-3. W SQL Server uruchom `sql/00_create_database.sql` i `sql/01_create_schemas.sql`.
-4. Przed uruchomieniem `sql/02_create_tables.sql` popraw błąd wskazany w [sql/README.md](sql/README.md).
-5. Zaimportuj wymiary przed tabelami faktów. Obecny import nie jest jeszcze zautomatyzowany.
-6. Po załadowaniu danych uruchom `sql/03_create_views.sql`.
-7. Otwórz `powerBI/ChainSupplyAnalysis.pbix` i ustaw połączenie z własną instancją SQL Server.
-8. Odśwież model i sprawdź stronę `00_QA` przed analizą wyników.
-
 ## Technologie
 
-- Power Query
-- SQL Server
-- SQL Server Management Studio
-- Power BI
-- DAX
-- Python, wykorzystany wcześniej do przygotowania danych modelowanych
-- Git i GitHub
+- Power Query i Power BI,
+- DAX,
+- SQL Server i SQL Server Management Studio,
+- Python do przygotowania scenariusza zapasów i zakupów,
+- Git i GitHub.
+
+## Ograniczenia
+
+- Część zapasowa i zakupowa ma charakter modelowany, dlatego służy do demonstracji metod analitycznych, a nie do oceny rzeczywistej firmy.
+- Import plików CSV do SQL Server wymaga ręcznego wskazania mapowania i kluczy dat.
+- Projekt nie obejmuje automatycznego odświeżania w Power BI Service ani prognozowania popytu.
 
 ## Źródło danych
 
-Podstawowe dane zamówień, produktów i wysyłek pochodzą z:
-
-Fabian Constante, Fernando Silva, António Pereira (2019), `DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS`, Mendeley Data, Version 5.
+Fabian Constante, Fernando Silva, António Pereira (2019), *DataCo SMART SUPPLY CHAIN FOR BIG DATA ANALYSIS*, Mendeley Data, Version 5.
 
 DOI: <https://doi.org/10.17632/8gx2fvg2k6.5>
 
-Licencja danych wskazana w projekcie: CC BY 4.0.
+Licencja danych: CC BY 4.0.
 
 ## Autor
 
