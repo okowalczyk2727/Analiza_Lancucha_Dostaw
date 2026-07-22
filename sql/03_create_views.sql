@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   VIEW [mart].[vw_dim_product]
+CREATE OR ALTER VIEW [mart].[vw_dim_product]
 AS
 SELECT
     p.product_ID AS product_id,
@@ -32,7 +32,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   VIEW [mart].[vw_fact_inventory]
+CREATE OR ALTER VIEW [mart].[vw_fact_inventory]
 AS
 SELECT
     snapshot_date_key,
@@ -66,7 +66,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   VIEW [mart].[vw_fact_purchase_orders]
+CREATE OR ALTER VIEW [mart].[vw_fact_purchase_orders]
 AS
 SELECT
     purchase_order_id,
@@ -97,7 +97,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   VIEW [mart].[vw_fact_sales]
+CREATE OR ALTER VIEW [mart].[vw_fact_sales]
 AS
 SELECT
     f.order_item_id,
@@ -152,7 +152,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE   VIEW [mart].[vw_fact_shipments]
+CREATE OR ALTER VIEW [mart].[vw_fact_shipments]
 AS
 SELECT
     f.order_ID AS order_id,
